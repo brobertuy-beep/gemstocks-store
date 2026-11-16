@@ -1,0 +1,6 @@
+# Copy to .dev.vars for local testing. In production set these with: wrangler secret put NAME
+ADMIN_PASSWORD=choose-a-long-password
+# Local only: skips Stripe and marks orders paid so the flow can be tested without keys.
+DEV_FAKE_PAY=1
+# STRIPE_SECRET_KEY=sk_test_...
+# STRIPE_WEBHOOK_SECRET=whsec_...

@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>GemStocks Admin</title>
+<meta name="theme-color" content="#0d1014">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0d1014;--ink-3:#2a313b;--paper:#f6f4ef;--card:#fff;--line:#e4e0d6;--text:#14181d;--muted:#5d6570;--gem:#45e0b8;--gem-deep:#0a8a6d;--red:#c8372d;--amber:#9a6a00;
+  --disp:"Bricolage Grotesque",system-ui,sans-serif;--body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;--r:16px}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--body);color:var(--text);background:var(--paper);line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2{font-family:var(--disp);letter-spacing:-.02em;margin:0;line-height:1.1}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+.wrap{max-width:860px;margin:0 auto;padding:0 16px}
+:focus-visible{outline:3px solid var(--gem);outline-offset:2px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 20px;border-radius:999px;border:1.5px solid transparent;font-weight:800;background:var(--ink);color:#fff;text-decoration:none}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.gem{background:var(--gem);color:#04241c}
+.btn.line{background:var(--card);color:var(--text);border-color:var(--line)}
+.btn.danger{background:var(--card);color:var(--red);border-color:#efc9c5}
+.btn.sm{min-height:40px;padding:0 14px;font-size:.88rem}
+
+/* login */
+#login{min-height:100dvh;display:grid;place-items:center;padding:20px;background:var(--ink)}
+#login form{width:min(380px,100%);background:var(--card);border-radius:24px;padding:32px 26px}
+#login h1{font-size:1.8rem;margin-bottom:6px}
+#login p{color:var(--muted);margin:0 0 22px;font-weight:600}
+
+label.f{display:block;font-weight:800;font-size:.86rem;margin-bottom:14px}
+label.f small{font-weight:600;color:var(--muted)}
+.in{display:block;width:100%;margin-top:6px;min-height:48px;padding:10px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font-weight:600}
+.in:focus{outline:none;border-color:var(--ink)}
+textarea.in{min-height:110px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.err{color:var(--red);font-weight:700;font-size:.9rem;min-height:1.4em;margin:0 0 8px}
+
+/* app shell */
+header{position:sticky;top:0;z-index:5;background:var(--ink);color:#fff}
+.top{display:flex;align-items:center;gap:12px;height:60px}
+.top b{font-family:var(--disp);font-size:1.2rem;margin-right:auto}
+.top b span{color:var(--gem)}
+.top a,.top button{color:#a6afbb;background:none;border:0;font-weight:700;font-size:.9rem;text-decoration:none;padding:8px}
+.tabs{display:flex;gap:4px}
+.tabs button{flex:1;min-height:46px;border:0;background:none;color:#a6afbb;font-weight:800;border-bottom:3px solid transparent}
+.tabs button[aria-selected=true]{color:#fff;border-color:var(--gem)}
+.tabs i{font-style:normal;background:var(--gem);color:#04241c;border-radius:999px;padding:1px 8px;font-size:.75rem;margin-left:4px}
+main{padding:20px 0 90px}
+.note{background:#fff6dd;border:1px solid #f0d58a;color:#6b4e00;border-radius:12px;padding:10px 14px;font-size:.86rem;font-weight:600;margin-bottom:16px}
+.bar{display:flex;gap:10px;align-items:center;margin-bottom:16px}
+.bar .in{margin:0;flex:1}
+.empty{text-align:center;color:var(--muted);font-weight:600;padding:50px 0}
+
+/* card list */
+.item{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px;margin-bottom:8px}
+.item img{width:64px;height:64px;border-radius:10px;object-fit:cover;background:#eceae4}
+.item .t{font-weight:700;font-size:.92rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item .m{font-size:.82rem;color:var(--muted);font-weight:600;margin-top:2px}
+.item .p{font-family:var(--disp);font-weight:800;font-size:1.05rem;text-align:right}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.72rem;font-weight:800;background:#e6f8f2;color:var(--gem-deep)}
+.badge.off{background:#eee;color:var(--muted)}
+.badge.sold{background:#fde8e6;color:var(--red)}
+.badge.wait{background:#fff6dd;color:var(--amber)}
+
+/* orders */
+.order{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.order h2{font-size:1.15rem;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.order .when{color:var(--muted);font-size:.82rem;font-weight:600;margin:2px 0 10px}
+.order ul{margin:0 0 10px;padding-left:18px;font-weight:600;font-size:.92rem}
+.order address{font-style:normal;background:var(--paper);border-radius:12px;padding:10px 12px;font-weight:600;font-size:.92rem;white-space:pre-line;margin-bottom:10px}
+.order .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.order .acts .in{margin:0;flex:1 1 160px;min-height:40px;padding:6px 12px}
+.order .tot{font-weight:800}
+
+/* editor */
+dialog{border:0;padding:0;width:min(640px,100%);max-width:100%;max-height:100dvh;height:100dvh;margin:0 0 0 auto;background:var(--paper)}
+dialog::backdrop{background:rgba(13,16,20,.55)}
+.ed-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line)}
+.ed-head h2{font-size:1.3rem;margin-right:auto}
+.ed-body{padding:18px 16px 30px}
+.photos{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px}
+.photos figure{position:relative;margin:0;width:84px;height:84px}
+.photos img{width:100%;height:100%;object-fit:cover;border-radius:12px;background:#eceae4}
+.photos figure button{position:absolute;top:-6px;right:-6px;width:26px;height:26px;border-radius:50%;border:0;background:var(--ink);color:#fff;font-weight:800;line-height:1}
+.photos label{width:84px;height:84px;border-radius:12px;border:2px dashed #c9c4b7;display:grid;place-items:center;text-align:center;font-weight:800;font-size:.78rem;color:var(--muted);cursor:pointer}
+.checks{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 16px}
+.checks label{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);font-weight:700;font-size:.88rem;cursor:pointer}
+.checks label:has(input:checked){background:var(--ink);border-color:var(--ink);color:#fff}
+.checks input{position:absolute;opacity:0}
+.ed-foot{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.ed-foot .btn{flex:1 1 140px}
+.lbl{font-weight:800;font-size:.86rem}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,160%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:999px;font-weight:700;font-size:.9rem;transition:transform .25s;z-index:99;max-width:calc(100% - 24px)}
+.toast.show{transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<section id="login" hidden>
+  <form id="loginForm">
+    <h1>GemStocks admin</h1>
+    <p>Log in to manage cards and orders.</p>
+    <label class="f">Password<input class="in" id="pw" type="password" autocomplete="current-password" required></label>
+    <p class="err" id="loginErr"></p>
+    <button class="btn" style="width:100%">Log in</button>
+  </form>
+</section>
+
+<div id="app" hidden>
+  <header>
+    <div class="wrap top"><b>GemStocks<span>.admin</span></b><a href="/" target="_blank" rel="noopener">View shop ↗</a><button id="logout">Log out</button></div>
+    <div class="wrap tabs" role="tablist">
+      <button role="tab" data-tab="cards" aria-selected="true">Cards</button>
+      <button role="tab" data-tab="orders" aria-selected="false">Orders<i id="toPost" hidden></i></button>
+      <button role="tab" data-tab="postage" aria-selected="false">Postage</button>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="note" id="payNote" hidden></div>
+
+    <section id="tab-cards">
+      <div class="bar"><input class="in" id="find" type="search" placeholder="Search your cards…"><button class="btn gem" id="addBtn">+ Add card</button></div>
+      <div id="cardList"></div>
+    </section>
+
+    <section id="tab-orders" hidden><div id="orderList"></div></section>
+
+    <section id="tab-postage" hidden>
+      <form id="postForm" style="max-width:460px">
+        <p style="color:var(--muted);font-weight:600;margin-top:0">Postage is worked out from what is in the cart. An order of only "letter" cards uses the letter rate; anything else uses the parcel rate.</p>
+        <label class="f">Tracked letter ($)<input class="in" name="letter" type="number" step="0.01" min="0" required></label>
+        <label class="f">Tracked parcel ($)<input class="in" name="parcel" type="number" step="0.01" min="0" required></label>
+        <label class="f">Express, extra on top ($)<input class="in" name="express_extra" type="number" step="0.01" min="0" required></label>
+        <div class="row">
+          <label class="f">Add signature for orders over ($)<input class="in" name="signature_threshold" type="number" step="0.01" min="0" required></label>
+          <label class="f">Signature fee ($)<input class="in" name="signature_fee" type="number" step="0.01" min="0" required></label>
+        </div>
+        <button class="btn">Save postage</button>
+      </form>
+    </section>
+  </main>
+</div>
+
+<dialog id="ed">
+  <form id="edForm" method="dialog">
+    <div class="ed-head"><h2 id="edTitle">Add card</h2><button class="btn line sm" type="button" id="edClose">Close</button><button class="btn gem sm" id="edSave">Save</button></div>
+    <div class="ed-body">
+      <span class="lbl">Photos <small style="color:var(--muted);font-weight:600">(first photo is the main one)</small></span>
+      <div class="photos" id="photos"></div>
+      <label class="f">Title<input class="in" name="title" maxlength="200" required placeholder="e.g. PSA 10 Charizard ex 199/165 SIR 151"></label>
+      <div class="row">
+        <label class="f">Price (AUD)<input class="in" name="price" type="number" step="0.01" min="0.5" required inputmode="decimal"></label>
+        <label class="f">Quantity in stock<input class="in" name="qty" type="number" step="1" min="0" max="999" required inputmode="numeric" value="1"></label>
+      </div>
+      <span class="lbl">Categories</span>
+      <div class="checks" id="cats"></div>
+      <div class="row">
+        <label class="f">Condition <small>(optional)</small><input class="in" name="condition" maxlength="60" placeholder="NM, PSA 10, Sealed…"></label>
+        <label class="f">Posts as<select class="in" name="ship_class"><option value="letter">Letter (single cards)</option><option value="parcel">Parcel (slabs, sealed, cases)</option></select></label>
+      </div>
+      <label class="f">Description <small>(optional)</small><textarea class="in" name="description" maxlength="4000"></textarea></label>
+      <label class="f">eBay listing link <small>(optional, for your reference)</small><input class="in" name="ebay_url" type="url" placeholder="https://www.ebay.com.au/itm/…"></label>
+      <label class="f">Visibility<select class="in" name="status"><option value="active">Showing in shop</option><option value="hidden">Hidden</option></select></label>
+      <p class="err" id="edErr"></p>
+      <div class="ed-foot">
+        <button class="btn line" type="button" id="copyBtn">Copy listing text</button>
+        <button class="btn line" type="button" id="soldBtn">Mark sold</button>
+        <button class="btn danger" type="button" id="delBtn">Delete</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const CATS = [['pokemon','Pokémon'],['onepiece','One Piece'],['lorcana','Lorcana'],['graded','Graded'],['singles','Singles'],['sealed','Sealed'],['accessories','Accessories']];
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const money = c => '$' + (c / 100).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const when = t => t ? new Date(t * 1000).toLocaleString('en-AU', {day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'}) : '';
+const BLANK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Crect width='10' height='10' fill='%23eceae4'/%3E%3C/svg%3E";
+let products = [], orders = [], editing = null, photos = [];
+
+let tt; function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2800); }
+
+async function api(path, method = 'GET', data) {
+  const blob = data instanceof Blob;
+  const r = await fetch('/api/admin/' + path, {method, headers: {'x-gs': '1', ...(data !== undefined ? {'content-type': blob ? data.type : 'application/json'} : {})}, body: data === undefined ? undefined : blob ? data : JSON.stringify(data)});
+  const d = await r.json().catch(() => ({}));
+  if (r.status === 401 && path !== 'login') { showLogin(); throw new Error('Please log in again'); }
+  if (!r.ok) throw new Error(d.error || 'Something went wrong');
+  return d;
+}
+
+/* ---------- login ---------- */
+function showLogin(){ $('#app').hidden = true; $('#login').hidden = false; $('#pw').focus(); }
+$('#loginForm').onsubmit = async e => {
+  e.preventDefault(); $('#loginErr').textContent = '';
+  try { await api('login', 'POST', {password: $('#pw').value}); $('#pw').value = ''; start(); }
+  catch (err) { $('#loginErr').textContent = err.message; }
+};
+$('#logout').onclick = async () => { await api('logout', 'POST', {}).catch(() => {}); showLogin(); };
+
+async function start(){
+  let me; try { me = await api('me'); } catch (e) { return; }
+  $('#login').hidden = true; $('#app').hidden = false;
+  const n = $('#payNote');
+  n.hidden = me.stripe;
+  n.textContent = me.fakePay ? 'Test mode: Stripe is not connected, so checkout pretends the buyer paid. No real money moves.' : 'Stripe is not connected yet, so buyers cannot check out.';
+  await Promise.all([loadCards(), loadOrders(), loadPostage()]);
+}
+
+/* ---------- tabs ---------- */
+document.querySelector('.tabs').onclick = e => {
+  const b = e.target.closest('[data-tab]'); if (!b) return;
+  document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x === b));
+  for (const t of ['cards','orders','postage']) $('#tab-' + t).hidden = t !== b.dataset.tab;
+  if (b.dataset.tab === 'orders') loadOrders();
+};
+
+/* ---------- cards ---------- */
+async function loadCards(){ products = (await api('products')).products; renderCards(); }
+function renderCards(){
+  const q = $('#find').value.trim().toLowerCase();
+  const list = products.filter(p => !q || p.title.toLowerCase().includes(q));
+  $('#cardList').innerHTML = list.length ? list.map(p => {
+    const b = p.status === 'hidden' ? '<span class="badge off">Hidden</span>' : p.qty < 1 ? '<span class="badge sold">Sold</span>' : '<span class="badge">Live</span>';
+    return `<button class="item" data-id="${p.id}"><img src="${esc(p.images[0] || BLANK)}" alt="" loading="lazy" onerror="this.onerror=null;this.src=BLANK">
+      <span><span class="t">${esc(p.title)}</span><span class="m">${b} · ${p.qty} in stock</span></span><span class="p">${money(p.price_cents)}</span></button>`;
+  }).join('') : `<p class="empty">${products.length ? 'No cards match that search.' : 'No cards yet. Tap “Add card” to list your first one.'}</p>`;
+}
+$('#find').oninput = renderCards;
+$('#cardList').onclick = e => { const b = e.target.closest('[data-id]'); if (b) openEditor(products.find(p => p.id === b.dataset.id)); };
+$('#addBtn').onclick = () => openEditor(null);
+
+/* ---------- editor ---------- */
+const F = $('#edForm');
+$('#cats').innerHTML = CATS.map(([k, n]) => `<label><input type="checkbox" name="cat" value="${k}">${n}</label>`).join('');
+function openEditor(p){
+  editing = p; photos = p ? [...p.images] : [];
+  $('#edTitle').textContent = p ? 'Edit card' : 'Add card'; $('#edErr').textContent = '';
+  F.title.value = p?.title || ''; F.price.value = p ? (p.price_cents / 100).toFixed(2) : ''; F.qty.value = p ? p.qty : 1;
+  F.condition.value = p?.condition || ''; F.ship_class.value = p?.ship_class || 'letter'; F.description.value = p?.description || '';
+  F.ebay_url.value = p?.ebay_url || ''; F.status.value = p?.status === 'hidden' ? 'hidden' : 'active';
+  F.querySelectorAll('[name=cat]').forEach(c => c.checked = !!p && p.categories.includes(c.value));
+  $('#delBtn').hidden = $('#soldBtn').hidden = !p;
+  renderPhotos(); $('#ed').showModal();
+}
+function renderPhotos(){
+  $('#photos').innerHTML = photos.map((u, i) => `<figure><img src="${esc(u)}" alt="" onerror="this.onerror=null;this.src=BLANK"><button type="button" data-rm="${i}" aria-label="Remove photo">×</button></figure>`).join('')
+    + (photos.length < 8 ? '<label>+ Add<br>photo<input id="file" type="file" accept="image/*" multiple hidden></label>' : '');
+}
+async function shrink(file){
+  const bmp = await createImageBitmap(file);
+  const s = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas'); c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  return new Promise(r => c.toBlob(r, 'image/jpeg', .86));
+}
+$('#photos').addEventListener('change', async e => {
+  if (e.target.id !== 'file') return;
+  for (const f of [...e.target.files].slice(0, 8 - photos.length)) {
+    try { toast('Uploading photo…'); photos.push((await api('upload', 'POST', await shrink(f))).url); renderPhotos(); }
+    catch (err) { toast(err.message); }
+  }
+});
+$('#photos').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (b) { photos.splice(+b.dataset.rm, 1); renderPhotos(); } });
+$('#edClose').onclick = () => $('#ed').close();
+
+const formData = () => ({
+  title: F.title.value, price_cents: Math.round(parseFloat(F.price.value) * 100), qty: parseInt(F.qty.value, 10),
+  categories: [...F.querySelectorAll('[name=cat]:checked')].map(c => c.value), condition: F.condition.value, ship_class: F.ship_class.value,
+  description: F.description.value, ebay_url: F.ebay_url.value, status: F.status.value, images: photos
+});
+async function saveCard(data, msg){
+  $('#edSave').disabled = true;
+  try { await api(editing ? 'products/' + editing.id : 'products', editing ? 'PUT' : 'POST', data); $('#ed').close(); toast(msg); await loadCards(); }
+  catch (err) { $('#edErr').textContent = err.message; }
+  $('#edSave').disabled = false;
+}
+F.onsubmit = e => { e.preventDefault(); saveCard(formData(), editing ? 'Card updated' : 'Card added to the shop'); };
+$('#soldBtn').onclick = () => saveCard({...formData(), qty: 0}, 'Marked as sold');
+$('#delBtn').onclick = async () => {
+  if (!confirm('Delete this card for good? To keep it for your records, use "Mark sold" or hide it instead.')) return;
+  try { await api('products/' + editing.id, 'DELETE'); $('#ed').close(); toast('Card deleted'); await loadCards(); } catch (err) { $('#edErr').textContent = err.message; }
+};
+$('#copyBtn').onclick = async () => {
+  const d = formData();
+  const lines = [d.title];
+  if (!isNaN(d.price_cents)) lines.push(money(d.price_cents) + ' AUD');
+  if (d.condition) lines.push('Condition: ' + d.condition);
+  if (d.description.trim()) lines.push('', d.description.trim());
+  lines.push('', 'Tracked postage available Australia-wide.');
+  const text = lines.join('\n');
+  try { await navigator.clipboard.writeText(text); toast('Listing text copied. Paste it into Facebook or eBay.'); } catch (e) { toast('Could not copy on this device'); }
+};
+
+/* ---------- orders ---------- */
+async function loadOrders(){ orders = (await api('orders')).orders; renderOrders(); }
+const addr = o => o.address ? [o.name, o.address.line1, o.address.line2, [o.address.city, o.address.state, o.address.postal_code].filter(Boolean).join(' '), o.address.country !== 'AU' && o.address.country].filter(Boolean).join('\n') : '';
+function renderOrders(){
+  const n = orders.filter(o => o.status === 'paid').length;
+  $('#toPost').hidden = !n; $('#toPost').textContent = n;
+  $('#orderList').innerHTML = orders.length ? orders.map(o => {
+    const badge = {paid: '<span class="badge sold">To post</span>', posted: '<span class="badge">Posted</span>', pending: '<span class="badge wait">At checkout</span>'}[o.status] || '';
+    return `<article class="order"><h2>${esc(o.id)} ${badge}</h2>
+      <div class="when">${when(o.paid_at || o.created_at)}${o.email ? ' · ' + esc(o.email) : ''}${o.phone ? ' · ' + esc(o.phone) : ''}</div>
+      <ul>${o.items.map(i => `<li>${i.qty} × ${esc(i.title)}</li>`).join('')}</ul>
+      ${o.address ? `<address>${esc(addr(o))}</address>` : ''}
+      <p class="tot">${money(o.total_cents)} <span style="color:var(--muted);font-weight:600">incl. ${money(o.shipping_cents)} ${esc(o.shipping_label)}</span></p>
+      ${o.status === 'pending' ? '<p style="color:var(--muted);font-weight:600;margin:0">Buyer is on the payment page. The cards are held for them for about 30 minutes.</p>' : `<div class="acts">
+        <input class="in" placeholder="Tracking number" value="${esc(o.tracking)}" data-track="${o.id}">
+        ${o.address ? `<button class="btn line sm" data-copy="${o.id}">Copy address</button>` : ''}
+        ${o.status === 'paid' ? `<button class="btn sm" data-post="${o.id}">Mark posted</button>` : `<button class="btn line sm" data-unpost="${o.id}">Undo posted</button><button class="btn line sm" data-savetrack="${o.id}">Save tracking</button>`}
+      </div>`}</article>`;
+  }).join('') : '<p class="empty">No orders yet. They will show up here as soon as someone pays.</p>';
+}
+$('#orderList').onclick = async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const d = b.dataset, id = d.post || d.unpost || d.savetrack || d.copy, o = orders.find(x => x.id === id);
+  if (d.copy) { try { await navigator.clipboard.writeText(addr(o)); toast('Address copied'); } catch (err) { toast('Could not copy on this device'); } return; }
+  const tracking = document.querySelector(`[data-track="${id}"]`).value;
+  try {
+    await api('orders/' + id, 'PUT', {tracking, ...(d.post ? {posted: true} : d.unpost ? {posted: false} : {})});
+    toast(d.post ? 'Marked as posted' : d.unpost ? 'Moved back to "to post"' : 'Tracking saved'); await loadOrders();
+  } catch (err) { toast(err.message); }
+};
+
+/* ---------- postage ---------- */
+const P = $('#postForm');
+async function loadPostage(){ const {postage} = await api('postage'); for (const k in postage) if (P[k]) P[k].value = (postage[k] / 100).toFixed(2); }
+P.onsubmit = async e => {
+  e.preventDefault();
+  const d = {}; for (const el of P.querySelectorAll('input')) d[el.name] = Math.round(parseFloat(el.value) * 100);
+  try { await api('postage', 'PUT', d); toast('Postage saved'); } catch (err) { toast(err.message); }
+};
+
+start();
+</script>
+</body>
+</html>
