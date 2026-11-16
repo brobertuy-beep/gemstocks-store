@@ -171,6 +171,18 @@ h1 em{font-style:normal;background:var(--holo);-webkit-background-clip:text;back
 @media (max-width:1100px){.revs{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:760px){.rev-top{grid-template-columns:1fr}.revs{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;margin-inline:calc(var(--gut)*-1);padding-inline:var(--gut);padding-bottom:10px;scrollbar-width:none}.revs::-webkit-scrollbar{display:none}.rev{flex:0 0 78%;max-width:300px;scroll-snap-align:center}}
 
+.ebay{margin-top:clamp(40px,6vw,72px);padding-top:clamp(32px,5vw,56px);border-top:1px solid var(--line)}
+.ebay-head{display:flex;flex-wrap:wrap;gap:20px;justify-content:space-between;align-items:flex-end}
+.h3{font-size:clamp(1.5rem,3.4vw,2.2rem);font-weight:800}
+.quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.quote{margin:0;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:14px}
+.quote blockquote{margin:0;font-weight:600;line-height:1.5}
+.quote figcaption{margin-top:auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.82rem;color:var(--muted);font-weight:700}
+.quote figcaption b{color:var(--text)}
+.pos{padding:3px 10px;border-radius:999px;background:#e6f8f2;color:var(--gem-deep);font-size:.74rem;font-weight:800}
+@media (max-width:980px){.quotes{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:640px){.quotes{grid-template-columns:1fr}}
+
 /* about */
 .about{background:var(--ink);color:#fff}
 .about .eyebrow{color:var(--gem-bright)}
@@ -323,7 +335,7 @@ body.open .drawer{transform:none}
       <div>
         <p class="eyebrow">Buyer reviews</p>
         <h2 class="h2">Rated 4.9 by real buyers</h2>
-        <p class="lede">Verified seller ratings from Facebook Marketplace, where GemStocks holds the “Highly rated” badge.</p>
+        <p class="lede">Seller ratings from Facebook Marketplace, where GemStocks holds the “Highly rated” badge, and verified-purchase feedback from eBay.</p>
       </div>
       <div class="score"><b>4.9</b><div><span class="stars" aria-label="5 stars">★★★★★</span><small>32 ratings · Facebook Marketplace</small></div></div>
     </div>
@@ -332,6 +344,21 @@ body.open .drawer{transform:none}
     </div>
     <div class="revs" id="revs"></div>
     <p class="rev-note">Star ratings and highlights as left by buyers on Facebook Marketplace. <a href="https://www.facebook.com/marketplace/profile/100016306538585/" target="_blank" rel="noopener">See them all on Facebook →</a></p>
+
+    <div class="ebay">
+      <div class="ebay-head">
+        <div>
+          <h3 class="h3">What eBay buyers say</h3>
+          <p class="lede">98.6% positive feedback on the gemstocks.tcg eBay store, from 72 ratings.</p>
+        </div>
+        <a class="btn btn-line" href="https://www.ebay.com.au/str/gemstockstcg?_tab=feedback" target="_blank" rel="noopener">Read all eBay feedback</a>
+      </div>
+      <div class="strengths" aria-label="eBay detailed seller ratings out of 5">
+        <span>Accurate description <i>4.9</i></span><span>Postage costs <i>5.0</i></span><span>Postage speed <i>4.9</i></span><span>Communication <i>4.9</i></span>
+      </div>
+      <div class="quotes" id="quotes"></div>
+      <p class="rev-note">Excerpts from verified-purchase feedback left on eBay. Detailed ratings are eBay’s averages out of 5 for the last 12 months.</p>
+    </div>
   </div>
 </section>
 
@@ -414,6 +441,15 @@ const REVIEWS = [
   ['Jarrod','16 Jul 2026',A],['Sage','2 Jul 2026',['Communication','Pricing','Item description']],
   ['Huy','9 Feb 2026',['Communication','Pricing']],['Hamish','3 Jan 2026',A],['Thắng','30 Dec 2025',A],
   ['Nam','18 Dec 2025',['Communication','Pricing','Item description']],['Dominic','6 Dec 2025',A]
+];
+
+/* Excerpts from real verified-purchase feedback on the eBay store (buyer IDs as eBay shows them) */
+const EBAY_FEEDBACK = [
+  ['n***c', 'Excellent seller and amazing customer service. Item was very well packed and arrived safely with no issues.'],
+  ['8***r', 'Excellent, item as described, fast, well packaged and great communication. Highly recommended.'],
+  ['m***c', 'Both cards arrived in great condition as advertised. Speedy postage, both cards wrapped and protected well inside.'],
+  ['d***d', 'Very quick postage, buyer packaged the card well in a toploader and inside a safe package.'],
+  ['0***3', 'fast postage, as described and quick responses from seller.']
 ];
 
 const $ = s => document.querySelector(s);
@@ -535,6 +571,7 @@ window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); }
 $('#chips').innerHTML = CATS.map(([k, n]) => `<button class="chip" data-cat="${k}" aria-pressed="${k === cat}">${n}</button>`).join('');
 $('#chips').onclick = e => { const b = e.target.closest('[data-cat]'); if (!b) return; cat = b.dataset.cat; document.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c === b)); renderGrid(); };
 $('#revs').innerHTML = REVIEWS.map(([n, d, tags]) => `<article class="rev"><div class="who"><span class="av" aria-hidden="true">${esc(n[0])}</span><div><b>${esc(n)}</b><time>${d}</time></div></div><span class="stars" aria-label="5 out of 5 stars">★★★★★</span><ul>${tags.map(t => `<li>${t}</li>`).join('')}</ul></article>`).join('');
+$('#quotes').innerHTML = EBAY_FEEDBACK.map(([who, text]) => `<figure class="quote"><blockquote>“${esc(text)}”</blockquote><figcaption><b>${esc(who)}</b><span class="pos">Positive</span>Verified purchase · eBay</figcaption></figure>`).join('');
 $('#yr').textContent = new Date().getFullYear();
 renderGrid();
 
