@@ -106,7 +106,7 @@ dialog::backdrop{background:rgba(13,16,20,.55)}
 <section id="login" hidden>
   <form id="loginForm">
     <h1>GemStocks admin</h1>
-    <p>Log in to manage cards and orders.</p>
+    <p id="loginHelp">Log in to manage cards and orders.</p>
     <label class="f">Password<input class="in" id="pw" type="password" autocomplete="current-password" required></label>
     <p class="err" id="loginErr"></p>
     <button class="btn" style="width:100%">Log in</button>
@@ -115,7 +115,7 @@ dialog::backdrop{background:rgba(13,16,20,.55)}
 
 <div id="app" hidden>
   <header>
-    <div class="wrap top"><b>GemStocks<span>.admin</span></b><a href="/" target="_blank" rel="noopener">View shop ↗</a><button id="logout">Log out</button></div>
+    <div class="wrap top"><b>GemStocks<span>.admin</span></b><a href="../" target="_blank" rel="noopener">View shop ↗</a><button id="logout">Log out</button></div>
     <div class="wrap tabs" role="tablist">
       <button role="tab" data-tab="cards" aria-selected="true">Cards</button>
       <button role="tab" data-tab="orders" aria-selected="false">Orders<i id="toPost" hidden></i></button>
@@ -179,7 +179,10 @@ dialog::backdrop{background:rgba(13,16,20,.55)}
 </dialog>
 <div class="toast" id="toast" role="status"></div>
 
+<script src="../demo-store.js"></script>
 <script>
+/* On the GitHub Pages preview, demo-store.js stands in for the server and keeps data in this browser only. */
+const DEMO = !!(window.GSDemo && GSDemo.on);
 const CATS = [['pokemon','Pokémon'],['onepiece','One Piece'],['lorcana','Lorcana'],['graded','Graded'],['singles','Singles'],['sealed','Sealed'],['accessories','Accessories']];
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -191,6 +194,7 @@ let products = [], orders = [], editing = null, photos = [];
 let tt; function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2800); }
 
 async function api(path, method = 'GET', data) {
+  if (DEMO) { try { return await GSDemo.admin(path, method, data); } catch (e) { if (e.status === 401) showLogin(); throw e; } }
   const blob = data instanceof Blob;
   const r = await fetch('/api/admin/' + path, {method, headers: {'x-gs': '1', ...(data !== undefined ? {'content-type': blob ? data.type : 'application/json'} : {})}, body: data === undefined ? undefined : blob ? data : JSON.stringify(data)});
   const d = await r.json().catch(() => ({}));
@@ -200,7 +204,11 @@ async function api(path, method = 'GET', data) {
 }
 
 /* ---------- login ---------- */
-function showLogin(){ $('#app').hidden = true; $('#login').hidden = false; $('#pw').focus(); }
+function showLogin(){
+  $('#app').hidden = true; $('#login').hidden = false;
+  if (DEMO) { $('#pw').required = false; $('#pw').placeholder = 'Not needed in the preview'; $('#loginHelp').textContent = 'Preview: no password needed, just tap Log in. The real admin is password protected.'; }
+  $('#pw').focus();
+}
 $('#loginForm').onsubmit = async e => {
   e.preventDefault(); $('#loginErr').textContent = '';
   try { await api('login', 'POST', {password: $('#pw').value}); $('#pw').value = ''; start(); }
@@ -213,6 +221,10 @@ async function start(){
   $('#login').hidden = true; $('#app').hidden = false;
   const n = $('#payNote');
   n.hidden = me.stripe;
+  if (me.demo) {
+    n.innerHTML = 'Preview admin: everything you change is saved in this browser only, so try anything. Orders from the preview shop appear under Orders. <button class="btn line sm" id="resetBtn" style="margin-top:8px">Reset preview data</button>';
+    $('#resetBtn').onclick = async () => { if (!confirm('Put the preview back to its starting cards and clear its orders?')) return; await api('reset', 'POST', {}); toast('Preview reset'); await Promise.all([loadCards(), loadOrders(), loadPostage()]); };
+  } else
   n.textContent = me.fakePay ? 'Test mode: Stripe is not connected, so checkout pretends the buyer paid. No real money moves.' : 'Stripe is not connected yet, so buyers cannot check out.';
   await Promise.all([loadCards(), loadOrders(), loadPostage()]);
 }
@@ -259,7 +271,8 @@ function renderPhotos(){
 }
 async function shrink(file){
   const bmp = await createImageBitmap(file);
-  const s = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const max = DEMO ? 600 : 1600;
+  const s = Math.min(1, max / Math.max(bmp.width, bmp.height));
   const c = document.createElement('canvas'); c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
   c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
   return new Promise(r => c.toBlob(r, 'image/jpeg', .86));

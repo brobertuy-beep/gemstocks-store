@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Test payment · GemStocks TCG</title>
+<meta name="theme-color" content="#0d1014">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0d1014;--ink-2:#1a1f26;--paper:#f6f4ef;--card:#fff;--line:#e4e0d6;--text:#14181d;--muted:#5d6570;--on-dark:#a6afbb;--gem:#45e0b8;--gem-deep:#0a8a6d;--red:#c8372d;
+  --disp:"Bricolage Grotesque",system-ui,sans-serif;--body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--body);color:var(--text);background:var(--card);line-height:1.5;-webkit-font-smoothing:antialiased}
+input,select,button{font:inherit;color:inherit}
+h1,h2{font-family:var(--disp);letter-spacing:-.02em;margin:0}
+:focus-visible{outline:3px solid var(--gem);outline-offset:2px}
+.test{background:#ffb020;color:#3d2a00;font-weight:800;font-size:.8rem;text-align:center;padding:8px 14px;letter-spacing:.02em}
+.grid{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100dvh - 36px)}
+.sum{background:var(--ink);color:#fff;padding:clamp(24px,5vw,64px);display:flex;justify-content:flex-end}
+.sum>div{width:min(420px,100%)}
+.back{color:var(--on-dark);text-decoration:none;font-weight:700;font-size:.9rem}
+.back:hover{color:#fff}
+.lbl{color:var(--on-dark);font-weight:700;margin:28px 0 4px}
+.amt{font-family:var(--disp);font-weight:800;font-size:clamp(2.2rem,6vw,3.2rem);letter-spacing:-.03em;line-height:1}
+.it{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.1);font-weight:600;font-size:.9rem}
+.it img{width:48px;height:48px;border-radius:8px;object-fit:cover;background:var(--ink-2)}
+.it small{display:block;color:var(--on-dark)}
+#items{margin-top:24px}
+.row{display:flex;justify-content:space-between;padding:6px 0;color:var(--on-dark);font-weight:600;font-size:.92rem}
+.row.big{color:#fff;font-weight:800;font-size:1.1rem;border-top:1px solid rgba(255,255,255,.1);margin-top:8px;padding-top:14px}
+main{padding:clamp(24px,5vw,64px)}
+form{width:min(440px,100%)}
+h2{font-size:1.15rem;margin:26px 0 10px}
+h2:first-child{margin-top:0}
+label{display:block;font-weight:700;font-size:.82rem;color:var(--muted);margin-bottom:10px}
+.in{display:block;width:100%;margin-top:4px;min-height:46px;padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);font-weight:600;color:var(--text)}
+.in:focus{outline:none;border-color:var(--ink)}
+.in[readonly]{background:var(--paper);color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{background:var(--paper);border-radius:10px;padding:12px 14px;font-weight:600;font-size:.88rem;color:var(--muted)}
+.opt{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:6px;font-weight:700;font-size:.92rem;color:var(--text);cursor:pointer}
+.opt:has(input:checked){border-color:var(--ink);background:var(--paper)}
+.opt span{margin-left:auto}
+.opt input{accent-color:var(--ink);width:18px;height:18px}
+.calc{font-size:.82rem;font-weight:700;color:var(--gem-deep);margin:0 0 8px}
+.pay{width:100%;min-height:52px;border-radius:12px;border:0;background:var(--ink);color:#fff;font-weight:800;font-size:1.05rem;margin-top:22px;cursor:pointer}
+.pay:disabled{opacity:.5;cursor:default}
+.fine{font-size:.78rem;color:var(--muted);font-weight:600;text-align:center;margin:12px 0 0}
+.err{color:var(--red);font-weight:700;font-size:.88rem;min-height:1.3em;margin:8px 0 0}
+@media (max-width:820px){.grid{grid-template-columns:1fr}.sum{justify-content:flex-start}}
+</style>
+</head>
+<body>
+<div class="test">TEST MODE · Preview payment page. No payment is taken and nothing you type leaves this browser.</div>
+<div class="grid">
+  <aside class="sum"><div>
+    <a class="back" href="./?cancelled=1">← Back to GemStocks</a>
+    <p class="lbl">Pay GemStocks TCG</p>
+    <div class="amt" id="amt">…</div>
+    <div id="items"></div>
+    <div class="row" style="margin-top:14px"><span>Subtotal</span><span id="sub"></span></div>
+    <div class="row"><span>Postage</span><span id="shp">Enter postcode</span></div>
+    <div class="row big"><span>Total due</span><span id="tot"></span></div>
+  </div></aside>
+  <main>
+    <form id="f" novalidate>
+      <h2>Contact</h2>
+      <label>Email<input class="in" name="email" type="email" autocomplete="email" required placeholder="you@example.com"></label>
+      <h2>Delivery address</h2>
+      <label>Full name<input class="in" name="name" autocomplete="name" required></label>
+      <label>Street address<input class="in" name="line1" autocomplete="address-line1" required></label>
+      <label>Suburb<input class="in" name="city" autocomplete="address-level2" required></label>
+      <div class="two">
+        <label>Postcode<input class="in" name="postcode" inputmode="numeric" maxlength="4" autocomplete="postal-code" required placeholder="4000"></label>
+        <label>State<input class="in" name="state" readonly placeholder="From postcode" tabindex="-1"></label>
+      </div>
+      <h2>Postage</h2>
+      <div id="post"><div class="hint">Enter your postcode and postage is calculated for your order.</div></div>
+      <h2>Payment</h2>
+      <label>Card number <input class="in" value="4242 4242 4242 4242" readonly aria-describedby="cardnote"></label>
+      <div class="two">
+        <label>Expiry<input class="in" value="12 / 34" readonly></label>
+        <label>CVC<input class="in" value="123" readonly></label>
+      </div>
+      <p class="fine" id="cardnote" style="text-align:left;margin-top:0">A test card is filled in for you. Real card details are never asked for on this preview.</p>
+      <p class="err" id="err" role="alert"></p>
+      <button class="pay" id="pay" disabled>Pay</button>
+      <p class="fine">On the live store this step is Stripe’s secure payment page.</p>
+    </form>
+  </main>
+</div>
+<script src="demo-store.js"></script>
+<script>
+(async () => {
+  const D = window.GSDemo;
+  if (!D || !D.on) { location.replace('./'); return; }
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const money = c => '$' + (c / 100).toLocaleString('en-AU', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  await D.load();
+  let cart = {}; try { cart = JSON.parse(localStorage.getItem('gs_cart') || '{}') || {}; } catch (e) {}
+  const items = Object.keys(cart).map(id => ({id, qty: cart[id]}));
+  let q; try { if (!items.length) throw 0; q = D.quote(items); } catch (e) { location.replace('./'); return; }
+  let shipId = new URLSearchParams(location.search).get('ship') === 'express' ? 'express' : 'standard', state = '';
+  const F = $('#f');
+
+  $('#items').innerHTML = q.lines.map(l => `<div class="it"><img src="${esc(l.image)}" alt=""><div>${esc(l.title)}<small>Qty ${l.qty}</small></div><div>${money(l.price_cents * l.qty)}</div></div>`).join('');
+  $('#sub').textContent = money(q.subtotal);
+
+  // Australian postcode ranges to state.
+  function stateFor(pc) {
+    if (!/^\d{4}$/.test(pc)) return '';
+    const n = +pc, r = (a, b) => n >= a && n <= b;
+    if (r(200, 299) || r(2600, 2618) || r(2900, 2920)) return 'ACT';
+    if (r(1000, 2599) || r(2619, 2899) || r(2921, 2999)) return 'NSW';
+    if (r(3000, 3999) || r(8000, 8999)) return 'VIC';
+    if (r(4000, 4999) || r(9000, 9999)) return 'QLD';
+    if (r(5000, 5999)) return 'SA';
+    if (r(6000, 6999)) return 'WA';
+    if (r(7000, 7999)) return 'TAS';
+    if (r(800, 999)) return 'NT';
+    return '';
+  }
+  function render() {
+    const opt = state && (q.options.find(o => o.id === shipId) || q.options[0]);
+    const total = q.subtotal + (opt ? opt.cents : 0);
+    $('#shp').textContent = opt ? money(opt.cents) : 'Enter postcode';
+    $('#tot').textContent = $('#amt').textContent = money(total);
+    $('#pay').textContent = 'Pay ' + money(total);
+    $('#pay').disabled = !opt;
+    $('#post').innerHTML = opt
+      ? `<p class="calc">Postage to ${esc(F.postcode.value)} ${state}, calculated for this order:</p>` + q.options.map(o => `<label class="opt"><input type="radio" name="ship" value="${o.id}"${o.id === opt.id ? ' checked' : ''}>${esc(o.label)}<span>${money(o.cents)}</span></label>`).join('')
+      : `<div class="hint">${F.postcode.value.length === 4 ? 'That postcode isn’t recognised. Postage is available Australia-wide.' : 'Enter your postcode and postage is calculated for your order.'}</div>`;
+  }
+  F.postcode.addEventListener('input', () => { F.postcode.value = F.postcode.value.replace(/\D/g, ''); state = stateFor(F.postcode.value); F.state.value = state; render(); });
+  $('#post').addEventListener('change', e => { if (e.target.name === 'ship') { shipId = e.target.value; render(); } });
+  render();
+
+  F.addEventListener('submit', async e => {
+    e.preventDefault(); $('#err').textContent = '';
+    if (!F.checkValidity() || !state) { F.reportValidity(); $('#err').textContent = 'Please fill in your email and delivery address.'; return; }
+    const b = $('#pay'); b.disabled = true; b.textContent = 'Processing…';
+    await new Promise(r => setTimeout(r, 900));
+    try {
+      const o = D.placeOrder({ items, shipping: shipId, email: F.email.value.trim(), name: F.name.value.trim(),
+        address: { line1: F.line1.value.trim(), line2: null, city: F.city.value.trim(), state, postal_code: F.postcode.value, country: 'AU' } });
+      localStorage.removeItem('gs_cart');
+      location.href = './?paid=' + encodeURIComponent(o.id) + '&session_id=demo';
+    } catch (err) { $('#err').textContent = err.message; render(); }
+  });
+})();
+</script>
+</body>
+</html>

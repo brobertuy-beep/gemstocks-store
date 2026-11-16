@@ -423,13 +423,14 @@ body.open .drawer{transform:none}
     <div class="tot"><span>Subtotal</span><span id="sub"></span></div>
     <div class="tot"><span>Postage</span><span id="shp"></span></div>
     <div class="tot big"><span>Total</span><span id="total"></span></div>
-    <div class="demo" id="demoNote" hidden>Preview store: checkout is simulated, so no payment is taken.</div>
+    <div class="demo" id="demoNote" hidden>Preview store: checkout opens a test payment page. No payment is taken.</div>
     <button class="btn btn-ink" id="payBtn" style="width:100%" disabled>Secure checkout</button>
     <p class="secure">🔒 Card payments are processed by Stripe. You’ll enter your delivery address on the next step.</p>
   </div>
 </aside>
 <div class="toast" id="toast" role="status"><span id="toastMsg"></span><button id="toastBtn">View cart</button></div>
 
+<script src="demo-store.js"></script>
 <script>
 /* GemStocks storefront. Cards, postage and checkout all come from the shop API (see src/worker.js).
    Cards are managed at /admin. */
@@ -462,29 +463,8 @@ const img = (p, s) => p.image ? p.image.replace(/\/s-l\d+\./, '/s-l' + s + '.') 
 
 let PRODUCTS = [], byId = {}, cart = {}, shipId = 'standard', quote = null, cat = 'all', query = '', loaded = false;
 
-/* Preview mode: on GitHub Pages there is no shop server, so cards come from demo-products.json,
-   postage is worked out in the browser and checkout is simulated. It never switches on anywhere else. */
-const DEMO = /\.github\.io$/.test(location.hostname);
-const DEMO_POST = {letter: 500, parcel: 1200, express_extra: 500, signature_threshold: 30000, signature_fee: 500};
-let demoList = null;
-function demoQuote(){
-  const ids = Object.keys(cart); let sub = 0;
-  for (const k of ids) sub += byId[k].p * cart[k];
-  const letter = ids.every(k => byId[k].ship === 'letter');
-  const sig = sub >= DEMO_POST.signature_threshold ? DEMO_POST.signature_fee : 0;
-  const base = (letter ? DEMO_POST.letter : DEMO_POST.parcel) + sig, kind = letter ? 'letter' : 'parcel', s = sig ? ' with signature' : '';
-  return {options: [{id: 'standard', label: `Tracked ${kind}${s}`, cents: base}, {id: 'express', label: `Express ${kind}${s}`, cents: base + DEMO_POST.express_extra}]};
-}
-async function demoCheckout(b){
-  await new Promise(r => setTimeout(r, 700));
-  const opt = quote.options.find(o => o.id === shipId) || quote.options[0];
-  let total = opt.cents;
-  for (const k in cart) { total += byId[k].p * cart[k]; const d = demoList.find(p => p.id === k); if (d) d.qty -= cart[k]; }
-  cart = {}; await loadProducts(); update();
-  b.textContent = 'Secure checkout';
-  $('#dfoot').hidden = true;
-  $('#lines').innerHTML = `<div class="done"><h3>Preview order placed</h3><p>Order total ${money(total)}. This is a preview store, so no payment was taken and nothing will be posted. On the live store, this step opens Stripe’s secure payment page.</p><a class="btn btn-ink" href="#shop" data-close>Keep browsing</a></div>`;
-}
+/* Preview mode (GitHub Pages only): demo-store.js stands in for the shop server. See that file. */
+const DEMO = !!(window.GSDemo && GSDemo.on);
 
 try { cart = JSON.parse(localStorage.getItem('gs_cart') || '{}') || {}; } catch (e) {}
 const save = () => { try { localStorage.setItem('gs_cart', JSON.stringify(cart)); } catch (e) {} };
@@ -499,10 +479,8 @@ const cartItems = () => Object.keys(cart).map(id => ({id, qty: cart[id]}));
 
 async function loadProducts() {
   let d;
-  if (DEMO) {
-    if (!demoList) { const r = await fetch('demo-products.json'); if (!r.ok) throw new Error('load'); demoList = (await r.json()).products; }
-    d = {products: demoList.filter(p => p.qty > 0)};
-  } else d = await api('/api/products');
+  if (DEMO) { await GSDemo.load(); d = {products: GSDemo.products()}; }
+  else d = await api('/api/products');
   PRODUCTS = d.products.map(p => ({id: p.id, t: p.title, p: p.price_cents, c: p.categories, max: p.qty, image: p.images[0] || '', cond: p.condition, ship: p.ship_class}));
   byId = Object.fromEntries(PRODUCTS.map(p => [p.id, p]));
   for (const k in cart) { if (!byId[k]) delete cart[k]; else cart[k] = Math.max(1, Math.min(cart[k] | 0, byId[k].max)); }
@@ -554,7 +532,7 @@ async function refreshQuote(){
   const run = ++quoteRun;
   quote = null;
   if (!Object.keys(cart).length) return;
-  if (DEMO) { quote = demoQuote(); renderCart(); return; }
+  if (DEMO) { try { quote = GSDemo.quote(cartItems()); renderCart(); } catch (e) { await soldOut(e); } return; }
   try { const q = await api('/api/quote', {items: cartItems()}); if (run === quoteRun) { quote = q; renderCart(); } }
   catch (e) { if (run === quoteRun && e.status === 409) await soldOut(e); }
 }
@@ -577,7 +555,7 @@ function closeCart(){ document.body.classList.remove('open','lock'); $('#drawer'
 /* checkout: the server re-checks prices and stock, holds the cards, then hands over to Stripe */
 $('#payBtn').onclick = async () => {
   const b = $('#payBtn'); b.disabled = true; b.textContent = 'Starting checkout…';
-  if (DEMO) return demoCheckout(b);
+  if (DEMO) { location.href = 'checkout-preview.html?ship=' + encodeURIComponent(shipId); return; }
   try { const d = await api('/api/checkout', {items: cartItems(), shipping: shipId}); location.href = d.url; }
   catch (e) { b.textContent = 'Secure checkout'; b.disabled = false; if (e.status === 409) await soldOut(e); else toast(e.message); }
 };
@@ -606,7 +584,7 @@ $('#chips').onclick = e => { const b = e.target.closest('[data-cat]'); if (!b) r
 $('#revs').innerHTML = REVIEWS.map(([n, d, tags]) => `<article class="rev"><div class="who"><span class="av" aria-hidden="true">${esc(n[0])}</span><div><b>${esc(n)}</b><time>${d}</time></div></div><span class="stars" aria-label="5 out of 5 stars">★★★★★</span><ul>${tags.map(t => `<li>${t}</li>`).join('')}</ul></article>`).join('');
 $('#quotes').innerHTML = EBAY_FEEDBACK.map(([who, text]) => `<figure class="quote"><blockquote>“${esc(text)}”</blockquote><figcaption><b>${esc(who)}</b><span class="pos">Positive</span>Verified purchase · eBay</figcaption></figure>`).join('');
 $('#yr').textContent = new Date().getFullYear();
-if (DEMO) { document.querySelector('.bar').textContent = 'Preview store · browse and try the cart · checkout is simulated, no payment is taken'; $('#demoNote').hidden = false; }
+if (DEMO) { document.querySelector('.bar').innerHTML = 'Preview store · checkout is a test page, no payment is taken · <a href="admin/">Open the admin preview</a>'; $('#demoNote').hidden = false; }
 renderGrid();
 
 /* start: handle a return from Stripe, then load the cards */
@@ -614,10 +592,10 @@ renderGrid();
   const qs = new URLSearchParams(location.search);
   const paid = qs.get('paid'), sid = qs.get('session_id'), cancelled = qs.get('cancelled');
   if (paid || cancelled) history.replaceState(null, '', location.pathname);
-  if (cancelled) await api('/api/checkout/cancel', {token: cancelled}).catch(() => {});
+  if (cancelled && !DEMO) await api('/api/checkout/cancel', {token: cancelled}).catch(() => {});
   let done = null;
   if (paid && sid) {
-    try { done = await api(`/api/order?id=${encodeURIComponent(paid)}&session_id=${encodeURIComponent(sid)}`); } catch (e) {}
+    try { done = DEMO ? (await GSDemo.load(), GSDemo.orderStatus(paid)) : await api(`/api/order?id=${encodeURIComponent(paid)}&session_id=${encodeURIComponent(sid)}`); } catch (e) {}
     if (done && done.status !== 'pending' && done.status !== 'cancelled') { cart = {}; save(); }
   }
   try { await loadProducts(); } catch (e) { $('#grid').innerHTML = `<p class="empty">The shop couldn’t load. Please refresh, or <a href="${FACEBOOK}">message us on Facebook</a>.</p>`; return; }
@@ -629,6 +607,7 @@ renderGrid();
       ? `Payment received for order <b>${esc(done.id)}</b> (${money(done.total_cents)}). It will be packed and posted with tracking, and your receipt is on its way by email.`
       : `We’re confirming payment for order <b>${esc(done.id)}</b>. If you were charged, your order is safe and you’ll get a receipt by email.`}</p><a class="btn btn-ink" href="#shop" data-close>Keep browsing</a></div>`;
   } else if (cancelled && Object.keys(cart).length) { openCart(); toast('Checkout cancelled. Your cart is saved.'); }
+  if (done && DEMO) document.querySelector('.done p').innerHTML = `Test payment accepted for order <b>${esc(done.id)}</b> (${money(done.total_cents)}). No real payment was taken and nothing will be posted. The order now shows in the <a href="admin/">admin preview</a> under Orders.`;
 })();
 </script>
 </body>
